@@ -95,6 +95,7 @@ def test(model, device, graphs, hyper_graph,motif2A):
     labels = torch.LongTensor([graph.label for graph in graphs]).to(device)
     correct = pred.eq(labels.view_as(pred)).sum().cpu().item()
     acc_train = correct / float(len(graphs))
+    # print(model.get_attention())
     return acc_train
 
 def main(dataset, epoch=800, num_layers=5, num_mlp_layers=3,lr=0.01, batch_size=32,filename='',degree_as_tag=False):
@@ -105,7 +106,7 @@ def main(dataset, epoch=800, num_layers=5, num_mlp_layers=3,lr=0.01, batch_size=
         description='PyTorch graph convolutional neural net for whole-graph classification')
     parser.add_argument('--dataset', type=str, default=dataset,
                         help='name of dataset (default: MUTAG)')
-    parser.add_argument('--device', type=int, default=0,
+    parser.add_argument('--device', type=int, default=1,
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=batch_size,
                         help='input batch size for training (default: 32)')
@@ -139,7 +140,7 @@ def main(dataset, epoch=800, num_layers=5, num_mlp_layers=3,lr=0.01, batch_size=
                         help='output file')
     args = parser.parse_args()
 
-    check_path = os.path.join('checkpoints_motif', dataset)
+    check_path = os.path.join('checkpoints', dataset)
     if not os.path.exists(check_path):
         os.mkdir(check_path)
     if filename=='':
@@ -152,7 +153,8 @@ def main(dataset, epoch=800, num_layers=5, num_mlp_layers=3,lr=0.01, batch_size=
     with open(filepath, 'w') as f:
         f.write(str(vars(args)))
         f.close()
-
+    with open('./attention_log.txt','a') as f_att:
+        f_att.write('{},{},{}\n'.format(dataset,epoch,num_layers))
     # set up seeds and gpu device
     torch.manual_seed(0)
     np.random.seed(0)
@@ -186,7 +188,6 @@ def main(dataset, epoch=800, num_layers=5, num_mlp_layers=3,lr=0.01, batch_size=
 
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
-
         max_acc_val = 0
         best_epoc=0
         model_best=copy.deepcopy(model)
@@ -242,7 +243,10 @@ def main(dataset, epoch=800, num_layers=5, num_mlp_layers=3,lr=0.01, batch_size=
                 f.write("\n")
             f.close()
 
-
+        f_attention_log=open('./attention_log.txt','a')
+        att=model_best.get_attention().cpu().detach().numpy()
+        np.savetxt(f_attention_log,att)
+        f_attention_log.close()
     filepath_acc=os.path.join(filename, 'final_accs.txt')
     f=open(filepath_acc,'w')
     acc_in_final_file=most_frequency_tests
@@ -267,19 +271,19 @@ def main(dataset, epoch=800, num_layers=5, num_mlp_layers=3,lr=0.01, batch_size=
 
 if __name__ == '__main__':
 
-    datasets = ['NCI1']
+    datasets = ['PTC_MR','PTC_MM','COX2','NCI1','PROTEINS','IMDB-MULTI','IMDB-BINARY','Synthetic']
     param_dicts = {
-        'MUTAG':{'epoch':300,'num_layer':3,'num_mlp_layer':1,'lr':0.01,'batch_size':32,'degree_as_tag':False},
-        'PTC_MR':{'epoch':400,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
-        'PTC_MM':{'epoch':400,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
-        'PTC_FR':{'epoch':400,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
-        'PTC_FM':{'epoch':400,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
-        'COX2': {'epoch': 400, 'num_layer': 3, 'num_mlp_layer':1, 'lr': 1e-2,'batch_size':8,'degree_as_tag':False},
-        'NCI1':{'epoch':400,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
-        'PROTEINS': {'epoch': 600, 'num_layer': 5, 'num_mlp_layer': 1, 'lr': 0.01, 'batch_size': 8,'degree_as_tag':False},
-        'IMDB-MULTI': {'epoch': 600, 'num_layer': 3, 'num_mlp_layer': 3, 'lr': 0.01,'batch_size':8,'degree_as_tag':True},
-        'IMDB-BINARY':{'epoch':800,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':True},
-        'Synthetic': {'epoch': 300, 'num_layer': 3, 'num_mlp_layer': 1, 'lr': 0.01, 'batch_size': 32, 'degree_as_tag': False}
+        'MUTAG':{'epoch':150,'num_layer':3,'num_mlp_layer':1,'lr':0.01,'batch_size':32,'degree_as_tag':False},
+        'PTC_MR':{'epoch':200,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
+        'PTC_MM':{'epoch':200,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
+        'PTC_FR':{'epoch':200,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
+        'PTC_FM':{'epoch':200,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
+        'COX2': {'epoch': 200, 'num_layer': 3, 'num_mlp_layer':1, 'lr': 1e-2,'batch_size':8,'degree_as_tag':False},
+        'NCI1':{'epoch':200,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':False},
+        'PROTEINS': {'epoch': 200, 'num_layer': 5, 'num_mlp_layer': 1, 'lr': 0.01, 'batch_size': 8,'degree_as_tag':False},
+        'IMDB-MULTI': {'epoch': 200, 'num_layer': 3, 'num_mlp_layer': 3, 'lr': 0.01,'batch_size':8,'degree_as_tag':True},
+        'IMDB-BINARY':{'epoch':200,'num_layer':5,'num_mlp_layer':3,'lr':0.01,'batch_size':32,'degree_as_tag':True},
+        'Synthetic': {'epoch': 200, 'num_layer': 3, 'num_mlp_layer': 1, 'lr': 0.01, 'batch_size': 32, 'degree_as_tag': False}
     }
 
     accs, mean_accs, std_accs = [], [], []

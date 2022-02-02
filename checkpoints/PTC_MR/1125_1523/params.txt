@@ -1,0 +1,1 @@
+{'dataset': 'PTC_MR', 'device': 0, 'batch_size': 32, 'iters_per_epoch': 50, 'epochs': 200, 'lr': 0.01, 'seed': 0, 'fold_idx': 10, 'num_layers': 5, 'num_mlp_layers': 3, 'hidden_dim': 64, 'final_dropout': 0.5, 'graph_pooling_type': 'sum', 'neighbor_pooling_type': 'sum', 'learn_eps': False, 'degree_as_tag': False, 'filename': ''}

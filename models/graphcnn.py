@@ -11,7 +11,7 @@ from mlp import MLP
 
 class GraphCNN(nn.Module):
     def __init__(self, num_layers, num_mlp_layers, input_dim, input_dim_hyper,hidden_dim, output_dim, final_dropout, learn_eps,
-                 graph_pooling_type, neighbor_pooling_type, device, multi_head=0):
+                 graph_pooling_type, neighbor_pooling_type, device, multi_head=1):
         '''
             num_layers: number of layers in the neural networks (INCLUDING the input layer)
             num_mlp_layers: number of layers in mlps (EXCLUDING the input layer)
@@ -71,6 +71,8 @@ class GraphCNN(nn.Module):
 
         self.multi_head=multi_head
 
+    def get_attention(self):
+        return self.atts
 
     def __preprocess_neighbors_maxpool(self, batch_graph):
         ###create padded_neighbor_list in concatenated graph
@@ -336,7 +338,7 @@ class GraphCNN(nn.Module):
             #hidden_rep2.append(h2)
 
         score_over_layer = 0
-
+        
         # perform pooling over all nodes in each graph in every layer
         for layer, h1 in enumerate(hidden_rep1):
             pooled_h = torch.spmm(graph_pool, h1)
